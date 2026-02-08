@@ -38,7 +38,7 @@ export function logEvent(eventType, metadata) {
   if (isSubmitted()) return; // immutable after submission
 
   // Debounce noisy events
-  const noisyEvents = ['FULLSCREEN_EXIT', 'FOCUS_LOST'];
+  const noisyEvents = ['FULLSCREEN_EXIT', "BROWSER_DETECTED", "TIMER_STARTED", 'COPY_ATTEMPT', 'CUT_ATTEMPT', 'PASTE_ATTEMPT'];
   if (noisyEvents.includes(eventType)) {
     const now = Date.now();
     if (lastEventTime[eventType] && now - lastEventTime[eventType] < DEBOUNCE_MS) {
@@ -48,16 +48,17 @@ export function logEvent(eventType, metadata) {
   }
 
   const ev = createEvent(eventType, { metadata });
-  enqueueEvents(ev);
+  enqueueEvents([ev]);
 }
 
 export function startBatchSender() {
   if (typeof window === "undefined" || isSubmitted()) return;
 
   // Global guard: only start once, never again
-  if (window.__batchSenderStarted) return;
-  window.__batchSenderStarted = true;
+  // if (window.__batchSenderStarted) return;
+  // window.__batchSenderStarted = true;
 
+  if (active) return;
   active = true;
   intervalId = window.setInterval(async () => {
     if (!hasPendingEvents()) return;
@@ -71,7 +72,7 @@ export async function flushAndSubmit() {
   if (isSubmitted()) return;
 
   // Set submitted flag immediately to prevent re-entry and timer restart
-  setSubmittedFlag();
+  // setSubmittedFlag();
 
   // send everything that is currently queued and mark as submitted
   const all = [];
