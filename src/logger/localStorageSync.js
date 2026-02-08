@@ -3,6 +3,7 @@
 const QUEUE_KEY = "secure_logs_queue";
 const ALL_EVENTS_KEY = "secure_logs_all_events";
 const SUBMITTED_KEY = "secure_attempt_submitted";
+const SUBMITTING_KEY = "submission_in_progress";
 
 export function loadQueueFromStorage() {
   if (typeof window === "undefined") return [];
@@ -49,4 +50,16 @@ export function setSubmittedFlag() {
 export function isSubmitted() {
   if (typeof window === "undefined") return false;
   return window.localStorage.getItem(SUBMITTED_KEY) === "true";
+}
+
+export function setSubmittingFlag() {
+  localStorage.setItem(SUBMITTING_KEY, "true");
+}
+
+export function isSubmitting() {
+  return localStorage.getItem(SUBMITTING_KEY) === "true";
+}
+
+export function clearSubmittingFlag() {
+  localStorage.removeItem(SUBMITTING_KEY);
 }

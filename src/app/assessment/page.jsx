@@ -27,7 +27,7 @@ import { addClipboardBlockers } from "../../security/clipboardTracker";
 import { useCountdown } from "../../security/timer";
 import { logEvent, startBatchSender, flushAndSubmit } from "../../logger/batchSender";
 import { getOrCreateAttemptId } from "../../logger/eventSchema";
-import { isSubmitted } from "../../logger/localStorageSync";
+import { isSubmitted, isSubmitting } from "../../logger/localStorageSync";
 
 const ASSESSMENT_DURATION_SECONDS = 30 * 60; // 30 minutes
 
@@ -89,7 +89,7 @@ export default function AssessmentPage() {
       return;
     }
 
-    if (isSubmitted()) {
+    if (isSubmitted() || isSubmitting()) {
       router.replace("/submitted");
       return;
     }

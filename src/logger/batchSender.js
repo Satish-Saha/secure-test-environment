@@ -2,7 +2,7 @@
 
 import { enqueueEvents, getAndClearBatch, hasPendingEvents } from "./eventQueue";
 import { createEvent, getOrCreateAttemptId } from "./eventSchema";
-import { isSubmitted, setSubmittedFlag } from "./localStorageSync";
+import { isSubmitted, setSubmittedFlag, setSubmittingFlag, clearSubmittingFlag } from "./localStorageSync";
 
 const BATCH_SIZE = 5;
 const BATCH_INTERVAL_MS = 5000;
@@ -72,23 +72,46 @@ export async function flushAndSubmit() {
   if (isSubmitted()) return;
 
   // Set submitted flag immediately to prevent re-entry and timer restart
-  // setSubmittedFlag();
+  setSubmittedFlag();
 
   // send everything that is currently queued and mark as submitted
   const all = [];
   let batch = getAndClearBatch(BATCH_SIZE);
+
   while (batch.length > 0) {
     all.push(...batch);
     batch = getAndClearBatch(BATCH_SIZE);
   }
-  if (all.length === 0) {
-    // still inform backend of submission
-    await sendBatchToServer([createEvent("ASSESSMENT_SUBMITTED")], true);
-  } else {
-    // ensure submission event is last
-    all.push(createEvent("ASSESSMENT_SUBMITTED"));
+  // if (all.length === 0) {
+  //   // still inform backend of submission
+  //   await sendBatchToServer([createEvent("ASSESSMENT_SUBMITTED")], true);
+  // } else {
+  //   // ensure submission event is last
+  //   all.push(createEvent("ASSESSMENT_SUBMITTED"));
+  //   await sendBatchToServer(all, true);
+  // }
+
+
+  // ✅ Always add submission event last
+  all.push(createEvent("ASSESSMENT_SUBMITTED"));
+
+  try {
+    // ✅ STEP 3: Send everything to backend
     await sendBatchToServer(all, true);
+
+    // ✅ STEP 4: Backend success → Final immutable submission flag
+    setSubmittedFlag();
+
+    // ✅ Clear temporary lock
+    clearSubmittingFlag();
+  } catch (err) {
+    // ❌ Network/server failed → allow retry
+    clearSubmittingFlag();
+
+    // Put logs back into queue
+    enqueueEvents(all);
   }
+
   if (intervalId) {
     clearInterval(intervalId);
     intervalId = null;
