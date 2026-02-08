@@ -41,6 +41,7 @@ export default function AssessmentPage() {
   const clipboardCleanupRef = useRef(null);
   const fullscreenStateRef = useRef(false);
   const fsHandlerRef = useRef(null);
+  const initializedRef = useRef(null);
 
   const { minutes, seconds } = useCountdown(ASSESSMENT_DURATION_SECONDS, {
     onExpire: async () => {
@@ -95,9 +96,12 @@ export default function AssessmentPage() {
       return;
     }
 
-    logEvent("TIMER_STARTED", { durationSeconds: ASSESSMENT_DURATION_SECONDS });
-
-    startBatchSender();
+    // Only initialize once, but allow cleanup to work
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+      logEvent("TIMER_STARTED", { durationSeconds: ASSESSMENT_DURATION_SECONDS });
+      startBatchSender();
+    }
 
     // On first load, if not already fullscreen, show the prompt
     const initialFs = isFullscreen();
