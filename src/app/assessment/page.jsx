@@ -79,6 +79,10 @@ export default function AssessmentPage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    
+    // Prevent all setup from running multiple times
+    if (initializedRef.current) return;
+    initializedRef.current = true;
 
     const attemptId = getOrCreateAttemptId();
     const browser = getBrowserDetails();
@@ -96,12 +100,9 @@ export default function AssessmentPage() {
       return;
     }
 
-    // Only initialize once, but allow cleanup to work
-    if (!initializedRef.current) {
-      initializedRef.current = true;
-      logEvent("TIMER_STARTED", { durationSeconds: ASSESSMENT_DURATION_SECONDS });
-      startBatchSender();
-    }
+    logEvent("TIMER_STARTED", { durationSeconds: ASSESSMENT_DURATION_SECONDS });
+
+    startBatchSender();
 
     // On first load, if not already fullscreen, show the prompt
     const initialFs = isFullscreen();
