@@ -26,7 +26,7 @@ import { addFocusListeners, removeFocusListeners } from "../../security/focusTra
 import { addClipboardBlockers } from "../../security/clipboardTracker";
 import { useCountdown } from "../../security/timer";
 import { logEvent, startBatchSender, flushAndSubmit } from "../../logger/batchSender";
-import { getOrCreateAttemptId } from "../../logger/eventSchema";
+// import { getOrCreateAttemptId } from "../../logger/eventSchema";
 import { isSubmitted, isSubmitting } from "../../logger/localStorageSync";
 
 const ASSESSMENT_DURATION_SECONDS = 30 * 60; // 30 minutes
@@ -53,10 +53,12 @@ export default function AssessmentPage() {
   });
 
   const handleClipboardAttempt = useCallback((type) => {
-    if (type === "COPY_ATTEMPT" || type === "CUT_ATTEMPT") {
+    if (type === "COPY_ATTEMPT") {
       logEvent("COPY_ATTEMPT");
     } else if (type === "PASTE_ATTEMPT") {
       logEvent("PASTE_ATTEMPT");
+    } else {
+      logEvent("CUT_ATTEMPT");
     }
     setSnackbar({ open: true, message: "Copy/Paste is disabled" });
   }, []);
@@ -80,7 +82,7 @@ export default function AssessmentPage() {
     if (typeof window === "undefined") return;
 
     // Early return for invalid states - these don't prevent effect cleanup
-    const attemptId = getOrCreateAttemptId();
+    // const attemptId = getOrCreateAttemptId();
     const browser = getBrowserDetails();
 
     if (!isChromeBrowser()) {

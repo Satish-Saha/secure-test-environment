@@ -8,11 +8,22 @@ const BATCH_SIZE = 5;
 const BATCH_INTERVAL_MS = 5000;
 
 let intervalId = null;
-let active = false;
+// let active = false;
 
 // Debounce map for noisy events (timestamp of last occurrence)
-const lastEventTime = {};
-const DEBOUNCE_MS = 500;
+// const lastEventTime = {};
+// const DEBOUNCE_MS = 500;
+
+const oncePerAttemptEvents = new Set([
+  "TIMER_STARTED",
+  "BROWSER_DETECTED",
+  "ASSESSMENT_SUBMITTED",
+  "COPY_ATTEMPT",
+  "CUT_ATTEMPT",
+  "PASTE_ATTEMPT"
+]);
+
+const firedOnce = new Set();
 
 async function sendBatchToServer(batch, markSubmitted = false) {
   if (!batch || batch.length === 0) return;
@@ -38,13 +49,18 @@ export function logEvent(eventType, metadata) {
   if (isSubmitted()) return; // immutable after submission
 
   // Debounce noisy events
-  const noisyEvents = ['FULLSCREEN_EXIT', "BROWSER_DETECTED", "TIMER_STARTED", 'COPY_ATTEMPT', 'CUT_ATTEMPT', 'PASTE_ATTEMPT'];
-  if (noisyEvents.includes(eventType)) {
-    const now = Date.now();
-    if (lastEventTime[eventType] && now - lastEventTime[eventType] < DEBOUNCE_MS) {
-      return; // Skip this event, too soon
-    }
-    lastEventTime[eventType] = now;
+  // const noisyEvents = ['FULLSCREEN_EXIT', "BROWSER_DETECTED", "TIMER_STARTED", 'COPY_ATTEMPT', 'CUT_ATTEMPT', 'PASTE_ATTEMPT'];
+  // if (noisyEvents.includes(eventType)) {
+  //   const now = Date.now();
+  //   if (lastEventTime[eventType] && now - lastEventTime[eventType] < DEBOUNCE_MS) {
+  //     return; // Skip this event, too soon
+  //   }
+  //   lastEventTime[eventType] = now;
+  // }
+
+  if (oncePerAttemptEvents.has(eventType)) {
+    if (firedOnce.has(eventType)) return;
+    firedOnce.add(eventType);
   }
 
   const ev = createEvent(eventType, { metadata });
@@ -55,11 +71,11 @@ export function startBatchSender() {
   if (typeof window === "undefined" || isSubmitted()) return;
 
   // Global guard: only start once, never again
-  // if (window.__batchSenderStarted) return;
-  // window.__batchSenderStarted = true;
+  if (window.__batchSenderStarted) return;
+  window.__batchSenderStarted = true;
 
-  if (active) return;
-  active = true;
+  // if (active) return;
+  // active = true;
   intervalId = window.setInterval(async () => {
     if (!hasPendingEvents()) return;
     const batch = getAndClearBatch(BATCH_SIZE);
@@ -72,7 +88,8 @@ export async function flushAndSubmit() {
   if (isSubmitted()) return;
 
   // Set submitted flag immediately to prevent re-entry and timer restart
-  setSubmittedFlag();
+  // setSubmittedFlag();
+  setSubmittingFlag();
 
   // send everything that is currently queued and mark as submitted
   const all = [];
@@ -116,5 +133,5 @@ export async function flushAndSubmit() {
     clearInterval(intervalId);
     intervalId = null;
   }
-  active = false;
+  // active = false;
 }
