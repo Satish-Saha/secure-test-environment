@@ -60,16 +60,6 @@ async function sendBatchToServer(batch, markSubmitted = false) {
 export function logEvent(eventType, metadata) {
   if (isSubmitted()) return; // immutable after submission
 
-  // Debounce noisy events
-  // const noisyEvents = ['FULLSCREEN_EXIT', "BROWSER_DETECTED", "TIMER_STARTED", 'COPY_ATTEMPT', 'CUT_ATTEMPT', 'PASTE_ATTEMPT'];
-  // if (noisyEvents.includes(eventType)) {
-  //   const now = Date.now();
-  //   if (lastEventTime[eventType] && now - lastEventTime[eventType] < DEBOUNCE_MS) {
-  //     return; // Skip this event, too soon
-  //   }
-  //   lastEventTime[eventType] = now;
-  // }
-
   if (oncePerAttemptEvents.has(eventType)) {
     if (firedOnce.has(eventType)) return;
     firedOnce.add(eventType);
@@ -86,8 +76,6 @@ export function startBatchSender() {
   if (window.__batchSenderStarted) return;
   window.__batchSenderStarted = true;
 
-  // if (active) return;
-  // active = true;
   intervalId = window.setInterval(async () => {
     if (!hasPendingEvents()) return;
     const batch = getAndClearBatch(BATCH_SIZE);
@@ -99,8 +87,7 @@ export async function flushAndSubmit() {
   if (typeof window === "undefined") return;
   if (isSubmitted()) return;
 
-  // Set submitted flag immediately to prevent re-entry and timer restart
-  // setSubmittedFlag();
+  // Set submitting flag immediately to prevent re-entry and timer restart
   setSubmittingFlag();
 
   // send everything that is currently queued and mark as submitted
@@ -111,27 +98,18 @@ export async function flushAndSubmit() {
     all.push(...batch);
     batch = getAndClearBatch(BATCH_SIZE);
   }
-  // if (all.length === 0) {
-  //   // still inform backend of submission
-  //   await sendBatchToServer([createEvent("ASSESSMENT_SUBMITTED")], true);
-  // } else {
-  //   // ensure submission event is last
-  //   all.push(createEvent("ASSESSMENT_SUBMITTED"));
-  //   await sendBatchToServer(all, true);
-  // }
-
 
   // ✅ Always add submission event last
   all.push(createEvent("ASSESSMENT_SUBMITTED"));
 
   try {
-    // ✅ STEP 3: Send everything to backend
+    // Send everything to backend
     await sendBatchToServer(all, true);
 
-    // ✅ STEP 4: Backend success → Final immutable submission flag
+    // Backend success → Final immutable submission flag
     setSubmittedFlag();
 
-    // ✅ Clear temporary lock
+    //Clear temporary lock
     clearSubmittingFlag();
   } catch (err) {
     // ❌ Network/server failed → allow retry
@@ -145,5 +123,4 @@ export async function flushAndSubmit() {
     clearInterval(intervalId);
     intervalId = null;
   }
-  // active = false;
 }
