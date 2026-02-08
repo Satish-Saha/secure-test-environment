@@ -8,11 +8,23 @@ const BATCH_SIZE = 5;
 const BATCH_INTERVAL_MS = 5000;
 
 let intervalId = null;
-// let active = false;
 
-// Debounce map for noisy events (timestamp of last occurrence)
-// const lastEventTime = {};
-// const DEBOUNCE_MS = 500;
+/**
+ * Client-side deduplication strategy:
+ * 
+ * LAYER 1: oncePerAttemptEvents - Prevent logEvent() from queuing the same event type twice
+ *          (e.g., BROWSER_DETECTED only logged once per attempt)
+ * 
+ * LAYER 2: eventId (in eventSchema.js) - Every event gets a unique UUID
+ * 
+ * LAYER 3: Backend deduplication (in /api/logs) - Server tracks eventIds and ignores duplicates
+ *          This handles: network retries, serverless function retries, client re-submissions
+ * 
+ * Why both layers? 
+ * - Client prevents noisy events (FULLSCREEN_EXIT, FOCUS_LOST) from queuing excessively
+ * - Backend is the source of truth: even if client queues duplicate, backend discards it
+ * - Idempotent design: retrying the same batch POST multiple times yields the same result
+ */
 
 const oncePerAttemptEvents = new Set([
   "TIMER_STARTED",

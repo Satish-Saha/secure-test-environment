@@ -45,6 +45,9 @@ export function createEvent(eventType, overrides = {}) {
   };
 
   return {
+    // Globally unique event ID using crypto.randomUUID() for end-to-end deduplication
+    // Backend will track received eventIds per attempt and ignore duplicates
+    eventId: crypto.randomUUID?.() || uuidv4(),
     eventType,
     timestamp: new Date().toISOString(),
     attemptId,
