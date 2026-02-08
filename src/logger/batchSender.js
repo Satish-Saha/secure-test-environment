@@ -49,6 +49,10 @@ export function startBatchSender() {
 export async function flushAndSubmit() {
   if (typeof window === "undefined") return;
   if (isSubmitted()) return;
+  
+  // Set submitted flag immediately to prevent re-entry and timer restart
+  setSubmittedFlag();
+  
   // send everything that is currently queued and mark as submitted
   const all = [];
   let batch = getAndClearBatch(BATCH_SIZE);
