@@ -41,7 +41,6 @@ export default function AssessmentPage() {
   const clipboardCleanupRef = useRef(null);
   const fullscreenStateRef = useRef(false);
   const fsHandlerRef = useRef(null);
-  const initializedRef = useRef(null);
 
   const { minutes, seconds } = useCountdown(ASSESSMENT_DURATION_SECONDS, {
     onExpire: async () => {
@@ -79,15 +78,10 @@ export default function AssessmentPage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    
-    // Prevent all setup from running multiple times
-    if (initializedRef.current) return;
-    initializedRef.current = true;
 
+    // Early return for invalid states - these don't prevent effect cleanup
     const attemptId = getOrCreateAttemptId();
     const browser = getBrowserDetails();
-
-    logEvent("BROWSER_DETECTED", { browser });
 
     if (!isChromeBrowser()) {
       logEvent("ACCESS_BLOCKED", { browser });
@@ -100,8 +94,8 @@ export default function AssessmentPage() {
       return;
     }
 
+    logEvent("BROWSER_DETECTED", { browser });
     logEvent("TIMER_STARTED", { durationSeconds: ASSESSMENT_DURATION_SECONDS });
-
     startBatchSender();
 
     // On first load, if not already fullscreen, show the prompt
