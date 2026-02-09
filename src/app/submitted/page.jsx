@@ -15,13 +15,25 @@ import {
   TableRow
 } from "@mui/material";
 
-import { loadAllEvents, isSubmitted } from "../../logger/localStorageSync";
+import { loadAllEvents, isSubmitted, clearAttempt } from "../../logger/localStorageSync";
 import { getOrCreateAttemptId } from "../../logger/eventSchema";
+import { clearAttemptState } from "../../logger/batchSender";
 
 export default function SubmittedPage() {
   const [events, setEvents] = useState([]);
   const [attemptId, setAttemptId] = useState("");
   const router = useRouter();
+
+  const handleStartNewAttempt = () => {
+    clearAttempt();
+    // Reset global batch sender flag to restart logging
+    if (typeof window !== "undefined") {
+      window.__batchSenderStarted = false;
+      clearAttemptState(); // Clear in-memory firedOnce Set so critical events can be logged again
+    }
+    // Navigate to assessment page for new attempt
+    router.replace("/assessment");
+  };
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -60,8 +72,7 @@ export default function SubmittedPage() {
           <Typography variant="body2" sx={{ mb: 2 }}>
             Attempt ID: <strong>{attemptId}</strong>
           </Typography>
-          <Button variant="contained" onClick={() => router.replace("/assessment")}
-          >
+          <Button variant="contained" onClick={handleStartNewAttempt}>
             Start New Attempt (demo only)
           </Button>
         </Paper>

@@ -63,3 +63,13 @@ export function isSubmitting() {
 export function clearSubmittingFlag() {
   localStorage.removeItem(SUBMITTING_KEY);
 }
+
+export function clearAttempt() {
+  // Clear all submission-related state to allow a new attempt
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(SUBMITTED_KEY);
+  window.localStorage.removeItem(SUBMITTING_KEY);
+  window.localStorage.removeItem(QUEUE_KEY);
+  window.localStorage.removeItem(ALL_EVENTS_KEY);
+  window.localStorage.removeItem("secure_attempt_id"); // Generate new attempt ID
+}

@@ -124,3 +124,9 @@ export async function flushAndSubmit() {
     intervalId = null;
   }
 }
+
+export function clearAttemptState() {
+  // Clear the in-memory firedOnce Set to allow relogging critical events on new attempt
+  // This is called when starting a fresh assessment after submission (demo mode)
+  firedOnce.clear();
+}
