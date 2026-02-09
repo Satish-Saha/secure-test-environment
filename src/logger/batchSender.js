@@ -13,7 +13,13 @@ let intervalId = null;
  * Client-side deduplication strategy:
  * 
  * LAYER 1: oncePerAttemptEvents - Prevent logEvent() from queuing the same event type twice
- *          (e.g., BROWSER_DETECTED only logged once per attempt)
+ *          Only includes events that can genuinely happen once per attempt:
+ *          - TIMER_STARTED (assessment starts once)
+ *          - BROWSER_DETECTED (browser detected once)
+ *          - ASSESSMENT_SUBMITTED (assessment submitted once)
+ *          
+ *          Note: Clipboard events (COPY_ATTEMPT, CUT_ATTEMPT, PASTE_ATTEMPT) are NOT restricted
+ *          because they are repeated user actions that can happen multiple times per attempt.
  * 
  * LAYER 2: eventId (in eventSchema.js) - Every event gets a unique UUID
  * 
@@ -21,7 +27,7 @@ let intervalId = null;
  *          This handles: network retries, serverless function retries, client re-submissions
  * 
  * Why both layers? 
- * - Client prevents noisy events (FULLSCREEN_EXIT, FOCUS_LOST) from queuing excessively
+ * - Client prevents critical events from being queued multiple times per attempt
  * - Backend is the source of truth: even if client queues duplicate, backend discards it
  * - Idempotent design: retrying the same batch POST multiple times yields the same result
  */
@@ -29,10 +35,7 @@ let intervalId = null;
 const oncePerAttemptEvents = new Set([
   "TIMER_STARTED",
   "BROWSER_DETECTED",
-  "ASSESSMENT_SUBMITTED",
-  "COPY_ATTEMPT",
-  "CUT_ATTEMPT",
-  "PASTE_ATTEMPT"
+  "ASSESSMENT_SUBMITTED"
 ]);
 
 const firedOnce = new Set();

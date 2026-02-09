@@ -41,6 +41,7 @@ export default function AssessmentPage() {
   const clipboardCleanupRef = useRef(null);
   const fullscreenStateRef = useRef(false);
   const fsHandlerRef = useRef(null);
+  // const lastClipboardAttemptRef = useRef({});
 
   const { minutes, seconds } = useCountdown(ASSESSMENT_DURATION_SECONDS, {
     onExpire: async () => {
@@ -53,6 +54,18 @@ export default function AssessmentPage() {
   });
 
   const handleClipboardAttempt = useCallback((type) => {
+    // Debounce clipboard events: ignore if same event fired within 300ms
+    // This prevents double-logging from event bubbling or duplicate handlers
+    // const now = Date.now();
+    // const lastTime = lastClipboardAttemptRef.current[type] || 0;
+    
+    // if (now - lastTime < 300) {
+    //   // Too soon, skip this event
+    //   return;
+    // }
+
+    // lastClipboardAttemptRef.current[type] = now;
+
     if (type === "COPY_ATTEMPT") {
       logEvent("COPY_ATTEMPT");
     } else if (type === "PASTE_ATTEMPT") {
